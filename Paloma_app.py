@@ -457,28 +457,28 @@ def normalize_part(s, prefix):
     return prefix + num
 
 
-# Apply robustly
-kp_code = kp_part.apply(lambda x: normalize_part(x, "KP"))
-kn_code = kn_part.apply(lambda x: normalize_part(x, "KN"))
-
-df["variables2"] = kp_code
-df["variable5"] = kn_code
-
-# Combine KP/KN
-df["variables"] = df["variables2"]
-df.loc[df["variable5"].notna(), "variables"] = df.loc[df["variable5"].notna(), "variable5"]
-
-# Rows WITHOUT KP/KN codes
-used_file2 = df.loc[df["variables"].isna(), ["Namen", "Datum", "Debet", "Credit"]].copy()
-used_file2 = used_file2.dropna(subset=["Namen"])
-used_file2 = used_file2.sort_values("Namen")
-
-# Rows WITH KP/KN codes
-used_file = df.loc[df["variables"].notna(), ["variables", "Datum", "Debet", "Credit"]].copy()
-used_file = used_file.rename(columns={"variables": "Namen"})
-used_file = used_file.sort_values("Namen", ascending=False)
-
-return used_file, used_file2
+    # Apply robustly
+    kp_code = kp_part.apply(lambda x: normalize_part(x, "KP"))
+    kn_code = kn_part.apply(lambda x: normalize_part(x, "KN"))
+    
+    df["variables2"] = kp_code
+    df["variable5"] = kn_code
+    
+    # Combine KP/KN
+    df["variables"] = df["variables2"]
+    df.loc[df["variable5"].notna(), "variables"] = df.loc[df["variable5"].notna(), "variable5"]
+    
+    # Rows WITHOUT KP/KN codes
+    used_file2 = df.loc[df["variables"].isna(), ["Namen", "Datum", "Debet", "Credit"]].copy()
+    used_file2 = used_file2.dropna(subset=["Namen"])
+    used_file2 = used_file2.sort_values("Namen")
+    
+    # Rows WITH KP/KN codes
+    used_file = df.loc[df["variables"].notna(), ["variables", "Datum", "Debet", "Credit"]].copy()
+    used_file = used_file.rename(columns={"variables": "Namen"})
+    used_file = used_file.sort_values("Namen", ascending=False)
+    
+    return used_file, used_file2
 
 
 
@@ -715,6 +715,7 @@ if st.button("Process file"):
                     file_name=f"{output_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
 
 
 
