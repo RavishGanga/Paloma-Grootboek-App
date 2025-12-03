@@ -431,7 +431,7 @@ def preprocess_kruis(df):
     )
 
     # Normalize KP part
-    def normalize_part(s, prefix):
+def normalize_part(s, prefix):
     # If None or NaN → skip
     if s is None or (isinstance(s, float) and np.isnan(s)):
         return np.nan
@@ -715,5 +715,6 @@ if st.button("Process file"):
                     file_name=f"{output_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
 
 
