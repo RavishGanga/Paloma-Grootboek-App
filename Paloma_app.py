@@ -416,69 +416,61 @@ def preprocess_kruis(df):
     kn_mask = df["Namen"].str.contains(r"( KN|\.KN)", na=False)
 
     # Extract parts after KP or KN
-    kp_part = df["Namen"].where(kp_mask).str.replace(
-        r".* KP", "", regex=True
-    )
-    kp_part = kp_part.where(kp_mask).str.replace(
-        r".*\.KP", "", regex=True
-    )
+    kp_part = df["Namen"].where(kp_mask).str.replace(r".* KP", "", regex=True)
+    kp_part = kp_part.where(kp_mask).str.replace(r".*\.KP", "", regex=True)
 
-    kn_part = df["Namen"].where(kn_mask).str.replace(
-        r".* KN", "", regex=True
-    )
-    kn_part = kn_part.where(kn_mask).str.replace(
-        r".*\.KN", "", regex=True
-    )
+    kn_part = df["Namen"].where(kn_mask).str.replace(r".* KN", "", regex=True)
+    kn_part = kn_part.where(kn_mask).str.replace(r".*\.KN", "", regex=True)
 
-    # Normalize KP part
+    # Normalize KP/KN part
     def normalize_part(s, prefix):
         # If None or NaN → skip
         if s is None or (isinstance(s, float) and np.isnan(s)):
             return np.nan
-    
+
         # Convert safely to string
         s = str(s)
-    
+
         # Replace '=' with '-'
         s = s.replace("=", "-")
-    
+
         # Extract the first sequence of digits
         m = re.search(r"([0-9]+)", s)
         if not m:
             return np.nan
-    
+
         num = m.group(1)
-    
+
         # Ensure leading "-" as in your R logic
         if "-" not in num:
             num = "-" + num
-    
+
         num = num.replace(" ", "")
         return prefix + num
 
+    # Apply robustly
+    kp_code = kp_part.apply(lambda x: normalize_part(x, "KP"))
+    kn_code = kn_part.apply(lambda x: normalize_part(x, "KN"))
 
-# Apply robustly
-kp_code = kp_part.apply(lambda x: normalize_part(x, "KP"))
-kn_code = kn_part.apply(lambda x: normalize_part(x, "KN"))
+    df["variables2"] = kp_code
+    df["variable5"] = kn_code
 
-df["variables2"] = kp_code
-df["variable5"] = kn_code
+    # Combine KP/KN
+    df["variables"] = df["variables2"]
+    df.loc[df["variable5"].notna(), "variables"] = df.loc[df["variable5"].notna(), "variable5"]
 
-# Combine KP/KN
-df["variables"] = df["variables2"]
-df.loc[df["variable5"].notna(), "variables"] = df.loc[df["variable5"].notna(), "variable5"]
+    # Rows WITHOUT KP/KN codes
+    used_file2 = df.loc[df["variables"].isna(), ["Namen", "Datum", "Debet", "Credit"]].copy()
+    used_file2 = used_file2.dropna(subset=["Namen"])
+    used_file2 = used_file2.sort_values("Namen")
 
-# Rows WITHOUT KP/KN codes
-used_file2 = df.loc[df["variables"].isna(), ["Namen", "Datum", "Debet", "Credit"]].copy()
-used_file2 = used_file2.dropna(subset=["Namen"])
-used_file2 = used_file2.sort_values("Namen")
+    # Rows WITH KP/KN codes
+    used_file = df.loc[df["variables"].notna(), ["variables", "Datum", "Debet", "Credit"]].copy()
+    used_file = used_file.rename(columns={"variables": "Namen"})
+    used_file = used_file.sort_values("Namen", ascending=False)
 
-# Rows WITH KP/KN codes
-used_file = df.loc[df["variables"].notna(), ["variables", "Datum", "Debet", "Credit"]].copy()
-used_file = used_file.rename(columns={"variables": "Namen"})
-used_file = used_file.sort_values("Namen", ascending=False)
+    return used_file, used_file2
 
-return used_file, used_file2
 
 
 
@@ -715,6 +707,7 @@ if st.button("Process file"):
                     file_name=f"{output_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
 
 
 
