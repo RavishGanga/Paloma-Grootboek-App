@@ -432,47 +432,54 @@ def preprocess_kruis(df):
 
     # Normalize KP part
     def normalize_part(s, prefix):
-        if s is None:
-            return np.nan
-        s = s.replace("=", "-")
-        # keep first digit-sequence
-        m = re.search(r"([0-9]+)", s)
-        if not m:
-            return np.nan
-        num = m.group(1)
-        # ensure leading "-"
-        if "-" not in num:
-            num = "-" + num
-        num = num.replace(" ", "")
-        return prefix + num
+    # If None or NaN → skip
+    if s is None or (isinstance(s, float) and np.isnan(s)):
+        return np.nan
 
-    kp_code = kp_part.apply(lambda x: normalize_part(x, "KP"))
-    kn_code = kn_part.apply(lambda x: normalize_part(x, "KN"))
+    # Convert safely to string
+    s = str(s)
 
-    df["variables2"] = kp_code
-    df["variable5"] = kn_code
+    # Replace '=' with '-'
+    s = s.replace("=", "-")
 
-    # Combine KP/KN
-    df["variables"] = df["variables2"]
-    df.loc[df["variable5"].notna(), "variables"] = df.loc[
-        df["variable5"].notna(), "variable5"
-    ]
+    # Extract the first sequence of digits
+    m = re.search(r"([0-9]+)", s)
+    if not m:
+        return np.nan
 
-    # used_file_other: rows WITHOUT KP/KN codes
-    used_file2 = df.loc[
-        df["variables"].isna(), ["Namen", "Datum", "Debet", "Credit"]
-    ].copy()
-    used_file2 = used_file2.dropna(subset=["Namen"])
-    used_file2 = used_file2.sort_values("Namen")
+    num = m.group(1)
 
-    # used_file_kpkn: rows with KP/KN codes; rename Namen to KP/KN code
-    used_file = df.loc[
-        df["variables"].notna(), ["variables", "Datum", "Debet", "Credit"]
-    ].copy()
-    used_file = used_file.rename(columns={"variables": "Namen"})
-    used_file = used_file.sort_values("Namen", ascending=False)
+    # Ensure leading "-" as in your R logic
+    if "-" not in num:
+        num = "-" + num
 
-    return used_file, used_file2
+    num = num.replace(" ", "")
+    return prefix + num
+
+
+# Apply robustly
+kp_code = kp_part.apply(lambda x: normalize_part(x, "KP"))
+kn_code = kn_part.apply(lambda x: normalize_part(x, "KN"))
+
+df["variables2"] = kp_code
+df["variable5"] = kn_code
+
+# Combine KP/KN
+df["variables"] = df["variables2"]
+df.loc[df["variable5"].notna(), "variables"] = df.loc[df["variable5"].notna(), "variable5"]
+
+# Rows WITHOUT KP/KN codes
+used_file2 = df.loc[df["variables"].isna(), ["Namen", "Datum", "Debet", "Credit"]].copy()
+used_file2 = used_file2.dropna(subset=["Namen"])
+used_file2 = used_file2.sort_values("Namen")
+
+# Rows WITH KP/KN codes
+used_file = df.loc[df["variables"].notna(), ["variables", "Datum", "Debet", "Credit"]].copy()
+used_file = used_file.rename(columns={"variables": "Namen"})
+used_file = used_file.sort_values("Namen", ascending=False)
+
+return used_file, used_file2
+
 
 
 def preprocess_cred(df):
@@ -708,4 +715,5 @@ if st.button("Process file"):
                     file_name=f"{output_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
 
