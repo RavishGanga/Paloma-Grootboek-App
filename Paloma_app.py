@@ -121,7 +121,7 @@ def write_tables_to_excel_kruis(
     total_saldo2,
 ):
     """
-    Build the Excel workbook for choice == 'kruis'.
+    Build the Excel workbook for choice == 'Kruisposten'.
     """
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         sheet_name = "Data"
@@ -310,7 +310,7 @@ def write_tables_to_excel_kruis(
 
 def write_tables_to_excel_simple(buffer, tables, total_saldo, title_prefix):
     """
-    Build the Excel workbook for cred / deb / voors:
+    Build the Excel workbook for Crediteuren / Debiteuren / Voorschotten:
     - detail tables per name
     - total_saldo
     - list of open balances > 5 SRD
@@ -406,7 +406,7 @@ def write_tables_to_excel_simple(buffer, tables, total_saldo, title_prefix):
 
 def preprocess_kruis(df):
     """
-    Implements the KP/KN logic from the R 'kruis' branch.
+    Implements the KP/KN logic from the R 'Kruisposten' branch.
     Returns: used_file_kpkn, used_file_other
     """
     df = df.copy()
@@ -634,12 +634,12 @@ def preprocess_voors(df):
 # Streamlit app
 # ============================================
 
-st.title("R Shiny → Python Streamlit: Saldo Excel Tool")
+st.title("Paloma grootboek Saldo Excel Tool")
 
 uploaded_file = st.file_uploader("Upload Excel file (.xlsx)", type=["xlsx"])
 choice = st.selectbox(
     "Select processing type",
-    options=["kruis", "cred", "deb", "voors"],
+    options=["Kruisposten", "Crediteuren", "Debiteuren", "Voorschotten"],
     index=0,
 )
 col1, col2 = st.columns(2)
@@ -662,7 +662,7 @@ if st.button("Process file"):
             if df_raw.empty:
                 st.warning("No data found in the selected range.")
             else:
-                if choice == "kruis":
+                if choice == "Kruisposten":
                     used_kpkn, used_other = preprocess_kruis(df_raw)
                     tables_kpkn, total_saldo1 = compute_saldo_tables(used_kpkn)
                     tables_other, total_saldo2 = compute_saldo_tables(used_other)
@@ -676,28 +676,28 @@ if st.button("Process file"):
                         total_saldo2,
                     )
 
-                elif choice == "cred":
+                elif choice == "Crediteuren":
                     used_file = preprocess_cred(df_raw)
                     tables, total_saldo = compute_saldo_tables(used_file)
                     buffer = BytesIO()
                     buffer = write_tables_to_excel_simple(
-                        buffer, tables, total_saldo, title_prefix="cred"
+                        buffer, tables, total_saldo, title_prefix="Crediteuren"
                     )
 
-                elif choice == "deb":
+                elif choice == "Debiteuren":
                     used_file = preprocess_deb(df_raw)
                     tables, total_saldo = compute_saldo_tables(used_file)
                     buffer = BytesIO()
                     buffer = write_tables_to_excel_simple(
-                        buffer, tables, total_saldo, title_prefix="deb"
+                        buffer, tables, total_saldo, title_prefix="Debiteuren"
                     )
 
-                elif choice == "voors":
+                elif choice == "Voorschotten":
                     used_file = preprocess_voors(df_raw)
                     tables, total_saldo = compute_saldo_tables(used_file)
                     buffer = BytesIO()
                     buffer = write_tables_to_excel_simple(
-                        buffer, tables, total_saldo, title_prefix="voors"
+                        buffer, tables, total_saldo, title_prefix="Voorschotten"
                     )
 
                 st.success("Excel file generated.")
@@ -708,3 +708,4 @@ if st.button("Process file"):
                     file_name=f"{output_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
