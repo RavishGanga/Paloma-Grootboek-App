@@ -1,0 +1,8 @@
+streamlit
+pandas
+python-docx
+rapidfuzz
+openpyxl
+docxcompose
+pypandoc
+xlsxwriter
