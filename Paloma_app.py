@@ -475,59 +475,59 @@ def preprocess_kruis(df):
 
 
 def preprocess_cred(df):
-       df = df.copy()
-       s = df["Namen"].fillna("").astype(str)
+    df = df.copy()
+    s = df["Namen"].fillna("").astype(str)
     
-       # 1) inhoud opschonen (woorden/tokens verwijderen)
-       patterns = [
-           r"\bAANK\b",
-           r"\bRIJST\b",
-           r"\bCOMM\w*\b",
-           r"\bCARGO\w*\b",
-           r"\bHN\w*\b",
-           r"\bPARB\w*\b",
-           r"\bBREUK\w*\b",
-           r"\bKEUR\w*\b",
-           r"\bBESTR\w*\b",
-           r"\bMT\b\.?",          # MT of MT.
-           r"\bI\b",              # losse letter I
-           r"\d+",                # cijfers
-           r"[\$\/\-,\.]",        # symbols/punct (komma/punt ook hier)
-       ]
+    # 1) inhoud opschonen (woorden/tokens verwijderen)
+    patterns = [
+    r"\bAANK\b",
+    r"\bRIJST\b",
+    r"\bCOMM\w*\b",
+    r"\bCARGO\w*\b",
+    r"\bHN\w*\b",
+    r"\bPARB\w*\b",
+    r"\bBREUK\w*\b",
+    r"\bKEUR\w*\b",
+    r"\bBESTR\w*\b",
+    r"\bMT\b\.?",          # MT of MT.
+    r"\bI\b",              # losse letter I
+    r"\d+",                # cijfers
+    r"[\$\/\-,\.]",        # symbols/punct (komma/punt ook hier)
+    ]
     
-       for pat in patterns:
-           s = s.str.replace(pat, " ", regex=True)
+    for pat in patterns:
+    s = s.str.replace(pat, " ", regex=True)
     
-       # 2) whitespace normaliseren
-       s = s.str.replace(r"\s+", " ", regex=True).str.strip()
+    # 2) whitespace normaliseren
+    s = s.str.replace(r"\s+", " ", regex=True).str.strip()
     
-       # 3) ABaboelal -> A Baboelal (CamelCase)
-       s = s.str.replace(r"^([A-Z]{1,2})([A-Z][a-z].+)$", r"\1 \2", regex=True)
+    # 3) ABaboelal -> A Baboelal (CamelCase)
+    s = s.str.replace(r"^([A-Z]{1,2})([A-Z][a-z].+)$", r"\1 \2", regex=True)
     
-       # 4) "Baboelal A" / "Baboelal A." -> "A Baboelal"
-       parts = s.str.split()
+    # 4) "Baboelal A" / "Baboelal A." -> "A Baboelal"
+    parts = s.str.split()
     
-       last = parts.str[-1].fillna("")
-       last_clean = last.str.replace(".", "", regex=False)
+    last = parts.str[-1].fillna("")
+    last_clean = last.str.replace(".", "", regex=False)
     
-       mask_swap = (
-           parts.str.len().ge(2) &
-           last_clean.str.fullmatch(r"[A-Za-z]{1,2}")
-       )
+    mask_swap = (
+    parts.str.len().ge(2) &
+    last_clean.str.fullmatch(r"[A-Za-z]{1,2}")
+    )
     
-       s_swap = parts[mask_swap].apply(lambda x: " ".join([x[-1].replace(".", "")] + x[:-1]))
-       s.loc[mask_swap] = s_swap
+    s_swap = parts[mask_swap].apply(lambda x: " ".join([x[-1].replace(".", "")] + x[:-1]))
+    s.loc[mask_swap] = s_swap
     
-       # 5) final tidy + leeg -> Geen Naam
-       s = s.str.replace(r"\s+", " ", regex=True).str.strip()
-       s = s.mask(s.eq(""), "Geen Naam")
+    # 5) final tidy + leeg -> Geen Naam
+    s = s.str.replace(r"\s+", " ", regex=True).str.strip()
+    s = s.mask(s.eq(""), "Geen Naam")
     
-       df["Namen"] = s
+    df["Namen"] = s
     
-       # sorteren zonder display te slopen
-       df["Namen_sort"] = df["Namen"].str.replace(r"\s+", "", regex=True).str.upper()
-       df = df.sort_values("Namen_sort").drop(columns=["Namen_sort"])
-       return df[["Namen", "Datum", "Debet", "Credit"]]
+    # sorteren zonder display te slopen
+    df["Namen_sort"] = df["Namen"].str.replace(r"\s+", "", regex=True).str.upper()
+    df = df.sort_values("Namen_sort").drop(columns=["Namen_sort"])
+    return df[["Namen", "Datum", "Debet", "Credit"]]
 
 
 def preprocess_deb(df):
@@ -702,6 +702,7 @@ if st.button("Process file"):
                     file_name=f"{output_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
 
 
 
