@@ -475,64 +475,59 @@ def preprocess_kruis(df):
 
 
 def preprocess_cred(df):
-    df = df.copy()
-
-    patterns = [
-        r" I .*",
-        r" I.*",
-        r"AANK.CARGORIJST",
-        r" CARGO.*",
-        r"AANK",
-        r"COMM.*",
-        r"[0-9]+",
-        r" MT\.",
-        r"\.CARGO",
-        r",",
-        r"HN.*",
-        r"RIJST",
-        r"\$",
-        r"-",
-        r"/",
-        r"PARB.*",
-        r"BREUK.*",
-        r"KEUR.*",
-        r"  .*",
-        r"BESTR.*",
-    ]
-
-    for pat in patterns:
-        df["Namen"] = df["Namen"].str.replace(pat, " ", regex=True)
-
-    # Split and check first word length
-    split_series = df["Namen"].fillna("").str.split()
-    first_word_len = split_series.apply(lambda x: len(x[0]) if len(x) > 0 else 0)
-
-    mask_short_first = first_word_len < 3
-    df.loc[mask_short_first, "Namen"] = df.loc[mask_short_first, "Namen"].str.replace(
-        " ", "", regex=False
-    )
-
-    df["Namen"] = df["Namen"].str.strip()
-    # Remove ' .something'
-    df["Namen"] = df["Namen"].str.replace(r" \.{1}.*", "", regex=True)
-
-    # Namen2 first word
-    df["Namen2"] = df["Namen"].str.split().str[0].fillna("")
-    df["Namen4"] = df["Namen"].str.replace(" ", "", regex=False)
-
-    # If nchar(Namen4) - nchar(Namen2) == 1 → use Namen2
-    len_namen4 = df["Namen4"].str.len()
-    len_namen2 = df["Namen2"].str.len()
-    mask_len = (len_namen4 - len_namen2) == 1
-
-    df["Namen3"] = df["Namen"]
-    df.loc[mask_len, "Namen3"] = df.loc[mask_len, "Namen2"]
-
-    df["Namen"] = df["Namen3"].str.replace(" ", "", regex=False)
-    df["Namen"] = df["Namen"].replace("", "Geen Naam")
-
-    df = df.sort_values("Namen")
-    return df[["Namen", "Datum", "Debet", "Credit"]]
+       df = df.copy()
+       s = df["Namen"].fillna("").astype(str)
+    
+       # 1) inhoud opschonen (woorden/tokens verwijderen)
+       patterns = [
+           r"\bAANK\b",
+           r"\bRIJST\b",
+           r"\bCOMM\w*\b",
+           r"\bCARGO\w*\b",
+           r"\bHN\w*\b",
+           r"\bPARB\w*\b",
+           r"\bBREUK\w*\b",
+           r"\bKEUR\w*\b",
+           r"\bBESTR\w*\b",
+           r"\bMT\b\.?",          # MT of MT.
+           r"\bI\b",              # losse letter I
+           r"\d+",                # cijfers
+           r"[\$\/\-,\.]",        # symbols/punct (komma/punt ook hier)
+       ]
+    
+       for pat in patterns:
+           s = s.str.replace(pat, " ", regex=True)
+    
+       # 2) whitespace normaliseren
+       s = s.str.replace(r"\s+", " ", regex=True).str.strip()
+    
+       # 3) ABaboelal -> A Baboelal (CamelCase)
+       s = s.str.replace(r"^([A-Z]{1,2})([A-Z][a-z].+)$", r"\1 \2", regex=True)
+    
+       # 4) "Baboelal A" / "Baboelal A." -> "A Baboelal"
+       parts = s.str.split()
+    
+       last = parts.str[-1].fillna("")
+       last_clean = last.str.replace(".", "", regex=False)
+    
+       mask_swap = (
+           parts.str.len().ge(2) &
+           last_clean.str.fullmatch(r"[A-Za-z]{1,2}")
+       )
+    
+       s_swap = parts[mask_swap].apply(lambda x: " ".join([x[-1].replace(".", "")] + x[:-1]))
+       s.loc[mask_swap] = s_swap
+    
+       # 5) final tidy + leeg -> Geen Naam
+       s = s.str.replace(r"\s+", " ", regex=True).str.strip()
+       s = s.mask(s.eq(""), "Geen Naam")
+    
+       df["Namen"] = s
+    
+       # sorteren zonder display te slopen
+       df["Namen_sort"] = df["Namen"].str.replace(r"\s+", "", regex=True).str.upper()
+       df = df.sort_values("Namen_sort").drop(columns=["Namen_sort"])
+       return df[["Namen", "Datum", "Debet", "Credit"]]
 
 
 def preprocess_deb(df):
@@ -707,6 +702,7 @@ if st.button("Process file"):
                     file_name=f"{output_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
 
 
 
