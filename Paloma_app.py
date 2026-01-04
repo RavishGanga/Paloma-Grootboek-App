@@ -496,7 +496,7 @@ def preprocess_cred(df):
     ]
     
     for pat in patterns:
-    s = s.str.replace(pat, " ", regex=True)
+        s = s.str.replace(pat, " ", regex=True)
     
     # 2) whitespace normaliseren
     s = s.str.replace(r"\s+", " ", regex=True).str.strip()
@@ -702,6 +702,7 @@ if st.button("Process file"):
                     file_name=f"{output_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
 
 
 
