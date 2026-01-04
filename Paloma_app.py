@@ -484,7 +484,7 @@ def preprocess_cred(df):
     r"\bCOMM(?:\.\s*|[\s\-\/])?RIJST\b.*$",
     r"\bRIJST\b",
     r"\bCOMM\w*\b",
-    r"\bCARGO\w*\b",
+    r"(?i)\bCARGO\w*\b.*$",
     r"\bHN\w*\b",
     r"\bPARB\w*\b",
     r"\bBREUK\w*\b",
@@ -703,6 +703,7 @@ if st.button("Process file"):
                     file_name=f"{output_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
 
 
 
