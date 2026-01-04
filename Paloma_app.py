@@ -481,6 +481,7 @@ def preprocess_cred(df):
     # 1) inhoud opschonen (woorden/tokens verwijderen)
     patterns = [
     r"\bAANK\b",
+    r"\bCOMM(?:\.\s*|[\s\-\/])?RIJST\b.*$",
     r"\bRIJST\b",
     r"\bCOMM\w*\b",
     r"\bCARGO\w*\b",
@@ -702,6 +703,7 @@ if st.button("Process file"):
                     file_name=f"{output_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
+
 
 
 
